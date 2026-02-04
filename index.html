@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>RoboCombat Dashboard Pro</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/nipplejs/0.10.1/nipplejs.min.js"></script>
+    <style>
+        :root {
+            --neon-green: #00ff88;
+            --neon-blue: #00d9ff;
+            --neon-purple: #bc13fe;
+            --neon-red: #ff3131;
+            --neon-yellow: #fbff00;
+            --bg-dark: #0a0a0a;
+            --card-bg: #161616;
+        }
+
+        body { 
+            font-family: 'Orbitron', sans-serif, system-ui; 
+            text-align: center; background: var(--bg-dark); 
+            color: white; margin: 0; overflow-x: hidden;
+            display: flex; flex-direction: column; height: 100vh;
+        }
+
+        /* Top Bar */
+        #header { padding: 10px; display: flex; justify-content: space-around; align-items: center; background: #000; border-bottom: 2px solid #333; }
+        #connect-btn { background: var(--neon-green); border: none; padding: 12px 25px; border-radius: 5px; font-weight: bold; cursor: pointer; box-shadow: 0 0 10px var(--neon-green); }
+
+        /* Status Display Gigante */
+        #main-display {
+            background: var(--card-bg); border: 3px solid #333;
+            margin: 15px; padding: 20px; border-radius: 20px;
+            display: flex; flex-direction: column; align-items: center;
+            transition: all 0.3s ease;
+        }
+        #current-cmd { font-size: 5rem; font-weight: 900; margin: 0; line-height: 1; }
+        #status-label { font-size: 1.5rem; letter-spacing: 5px; margin-top: 10px; color: #555; }
+
+        /* Sliders Maiores */
+        .controls-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; padding: 10px; }
+        .slider-group { background: #222; padding: 15px; border-radius: 15px; width: 40%; min-width: 300px; border-left: 5px solid var(--neon-blue); }
+        input[type=range] { width: 100%; height: 15px; cursor: pointer; accent-color: var(--neon-blue); }
+
+        /* Botões Especiais (Farol e Buzina) */
+        .special-btns { display: flex; gap: 20px; margin: 15px; }
+        .action-btn { 
+            width: 100px; height: 100px; border-radius: 50%; border: 2px solid #444; 
+            background: #222; color: white; font-weight: bold; cursor: pointer;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+        .action-btn.active-light { border-color: var(--neon-yellow); box-shadow: 0 0 20px var(--neon-yellow); color: var(--neon-yellow); }
+        .action-btn.active-horn { border-color: var(--neon-red); box-shadow: 0 0 20px var(--neon-red); color: var(--neon-red); }
+
+        /* Área de Movimento */
+        .control-area { height: 300px; position: relative; width: 100%; display: flex; justify-content: center; align-items: center; }
+        .button-grid { display: grid; grid-template-columns: repeat(3, 100px); gap: 20px; }
+        .dir-btn { width: 100px; height: 100px; background: #222; border: 2px solid #444; border-radius: 15px; color: white; font-size: 2rem; }
+        .hidden { display: none !important; }
+
+        /* Efeito de Brilho Dinâmico */
+        .glow-f { color: var(--neon-green) !important; text-shadow: 0 0 30px var(--neon-green); }
+        .glow-s { color: var(--neon-red) !important; text-shadow: 0 0 30px var(--neon-red); }
+    </style>
+</head>
+<body>
+
+    <div id="header">
+        <button id="connect-btn" onclick="connectBT()">CONECTAR HC-05</button>
+        <div class="mode-selector" style="background:#222; border-radius: 10px; padding: 5px;">
+            <button id="mode-pad" style="background:var(--neon-blue); border:none; padding:10px; color:white;" onclick="switchMode('pad')">JOYSTICK</button>
+            <button id="mode-btn" style="background:transparent; border:none; padding:10px; color:white;" onclick="switchMode('buttons')">BOTÕES</button>
+        </div>
+    </div>
+
+    <div id="main-display">
+        <p id="current-cmd">S</p>
+        <p id="status-label">PARADO</p>
+    </div>
+
+    <div class="special-btns">
+        <button id="btn-light" class="action-btn" onclick="toggleLight()">
+            <span>💡</span><br>FAROL
+        </button>
+        <button id="btn-horn" class="action-btn" onmousedown="horn(true)" onmouseup="horn(false)" ontouchstart="horn(true)" ontouchend="horn(false)">
+            <span>🔊</span><br>BUZINA
+        </button>
+    </div>
+
+    <div class="controls-row">
+        <div class="slider-group" style="border-color: var(--neon-blue);">
+            <label>POTÊNCIA: <span id="speed-val">150</span></label>
+            <input type="range" min="0" max="255" value="150" oninput="updateSpeed(this.value)">
+        </div>
+        <div class="slider-group" style="border-color: var(--neon-purple);">
+            <label>ALTURA PINO: <span id="height-val">90</span>°</label>
+            <input type="range" min="0" max="180" value="90" oninput="updateHeight(this.value)">
+        </div>
+    </div>
+
+    <div id="joy-area" class="control-area">
+        <div id="joystick-container"></div>
+    </div>
+
+    <div id="btn-area" class="control-area hidden">
+        <div class="button-grid">
+            <div></div> <button class="dir-btn" onmousedown="send('F')" onmouseup="send('S')">▲</button> <div></div>
+            <button class="dir-btn" onmousedown="send('L')" onmouseup="send('S')">◀</button>
+            <button class="dir-btn" onclick="send('S')" style="background: #444;">■</button>
+            <button class="dir-btn" onmousedown="send('R')" onmouseup="send('S')">▶</button>
+            <div></div> <button class="dir-btn" onmousedown="send('B')" onmouseup="send('S')">▼</button> <div></div>
+        </div>
+    </div>
+
+    <script>
+        let device, characteristic, lightOn = false;
+        const SERIAL_UUID = '00001101-0000-1000-8000-00805f9b34fb';
+        let lastCommand = '';
+
+        const config = {
+            'F': { label: 'FRENTE', color: 'var(--neon-green)' },
+            'B': { label: 'RÉ', color: 'var(--neon-yellow)' },
+            'L': { label: 'ESQUERDA', color: 'var(--neon-blue)' },
+            'R': { label: 'DIREITA', color: 'var(--neon-blue)' },
+            'S': { label: 'PARADO', color: 'var(--neon-red)' }
+        };
+
+        async function connectBT() {
+            try {
+                device = await navigator.bluetooth.requestDevice({ filters: [{ namePrefix: 'HC' }], optionalServices: [SERIAL_UUID] });
+                const server = await device.gatt.connect();
+                const service = await server.getPrimaryService(SERIAL_UUID);
+                characteristic = await service.getCharacteristic(SERIAL_UUID);
+                document.getElementById('connect-btn').style.display = 'none';
+            } catch (e) { console.log(e); }
+        }
+
+        function updateUI(cmd) {
+            const display = document.getElementById('current-cmd');
+            const label = document.getElementById('status-label');
+            const main = document.getElementById('main-display');
+            
+            display.innerText = cmd;
+            label.innerText = config[cmd].label;
+            display.style.color = config[cmd].color;
+            main.style.borderColor = config[cmd].color;
+            main.style.boxShadow = `0 0 30px ${config[cmd].color}44`;
+        }
+
+        async function sendRaw(data) {
+            if (characteristic) {
+                const encoder = new TextEncoder();
+                await characteristic.writeValue(encoder.encode(data + '\n'));
+            }
+        }
+
+        async function send(cmd) {
+            if (cmd !== lastCommand) {
+                lastCommand = cmd;
+                updateUI(cmd);
+                sendRaw(cmd);
+            }
+        }
+
+        function toggleLight() {
+            lightOn = !lightOn;
+            const btn = document.getElementById('btn-light');
+            btn.classList.toggle('active-light');
+            sendRaw(lightOn ? 'N' : 'F');
+        }
+
+        function horn(active) {
+            const btn = document.getElementById('btn-horn');
+            if(active) { btn.classList.add('active-horn'); sendRaw('P'); }
+            else { btn.classList.remove('active-horn'); sendRaw('p'); }
+        }
+
+        function updateSpeed(v) { document.getElementById('speed-val').innerText = v; sendRaw('V' + v); }
+        function updateHeight(v) { document.getElementById('height-val').innerText = v; sendRaw('H' + v); }
+
+        function switchMode(mode) {
+            document.getElementById('joy-area').classList.toggle('hidden', mode === 'buttons');
+            document.getElementById('btn-area').classList.toggle('hidden', mode === 'pad');
+            document.getElementById('mode-pad').style.background = mode === 'pad' ? 'var(--neon-blue)' : 'transparent';
+            document.getElementById('mode-btn').style.background = mode === 'buttons' ? 'var(--neon-blue)' : 'transparent';
+        }
+
+        // Joystick e Teclado permanecem com as lógicas das versões anteriores
+        const manager = nipplejs.create({ zone: document.getElementById('joystick-container'), mode: 'static', position: {left: '50%', top: '50%'}, color: 'white', size: 150 });
+        manager.on('dir:up', () => send('F')); manager.on('dir:down', () => send('B'));
+        manager.on('dir:left', () => send('L')); manager.on('dir:right', () => send('R'));
+        manager.on('end', () => send('S'));
+
+        window.addEventListener('keydown', (e) => {
+            const keys = { 'ArrowUp':'F', 'w':'F', 'ArrowDown':'B', 's':'B', 'ArrowLeft':'L', 'ArrowRight':'R', ' ':'S' };
+            if(keys[e.key]) send(keys[e.key]);
+            if(e.key === 'h' || e.key === 'H') horn(true);
+        });
+        window.addEventListener('keyup', (e) => { 
+            if(e.key === 'h' || e.key === 'H') horn(false);
+            else send('S'); 
+        });
+    </script>
+</body>
+</html>

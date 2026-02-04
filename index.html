@@ -2,82 +2,105 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Super Robo Control! 🚀</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/nipplejs/0.10.1/nipplejs.min.js"></script>
     <style>
-        :root { --cor-frente: #00ff88; --cor-lados: #00d9ff; --cor-parar: #ff3131; }
-        body { background: #000; color: white; font-family: sans-serif; text-align: center; margin: 0; display: flex; flex-direction: column; height: 100vh; }
-        header { padding: 20px; background: #1a1a1a; border-bottom: 4px solid #333; }
-        #btn-conectar { background: var(--cor-frente); border: none; padding: 15px 30px; border-radius: 50px; font-weight: bold; font-size: 1.2rem; cursor: pointer; }
-        #txt-comando { font-size: 4rem; margin: 20px 0; color: var(--cor-parar); }
-        .caixa { background: #1a1a1a; margin: 10px; padding: 15px; border-radius: 15px; border: 2px solid #333; }
-        .container { flex-grow: 1; display: flex; justify-content: center; align-items: center; }
-        input[type=range] { width: 80%; height: 20px; }
+        :root { --frente: #00ff88; --tras: #ffea00; --lados: #00d9ff; --parar: #ff3131; }
+        body { background: #000; color: white; font-family: 'Arial Rounded MT Bold', sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        header { padding: 15px; background: #1a1a1a; border-bottom: 4px solid #333; display: flex; justify-content: space-around; align-items: center; }
+        #btn-conectar { background: var(--frente); border: none; padding: 15px 30px; border-radius: 50px; font-weight: bold; cursor: pointer; font-size: 1.1rem; box-shadow: 0 4px #00a85a; }
+        #txt-comando { font-size: 3.5rem; margin: 15px 0; color: var(--parar); text-align: center; }
+        .controles { flex-grow: 1; display: flex; flex-direction: column; justify-content: space-around; align-items: center; }
+        .caixa-slider { background: #222; width: 85%; padding: 10px; border-radius: 15px; border: 2px solid #444; }
+        input[type=range] { width: 100%; height: 20px; accent-color: var(--lados); }
+        #joystick-zone { width: 200px; height: 200px; }
     </style>
 </head>
 <body>
 
 <header>
-    <button id="btn-conectar" onclick="conectarSerial()">CONECTAR VIA SERIAL 🔌</button>
+    <button id="btn-conectar" onclick="conectarForçado()">BUSCAR ROBÔ 🤖</button>
+    <p id="status" style="font-size: 0.7rem; color: #888;">Desconectado</p>
 </header>
 
-<div id="painel">
-    <p style="color: #888; margin-top: 10px;">COMANDO ATUAL:</p>
+<div class="controles">
     <h1 id="txt-comando">PARADO</h1>
-</div>
 
-<div class="caixa">
-    <label>POTÊNCIA: <b id="val-v">150</b></label><br>
-    <input type="range" min="0" max="255" value="150" oninput="ajustarV(this.value)">
-</div>
+    <div class="caixa-slider">
+        <label>VELOCIDADE: <b id="val-v">150</b></label>
+        <input type="range" min="0" max="255" value="150" oninput="ajustar('V', this.value, 'val-v')">
+    </div>
 
-<div class="container">
-    <div id="joystick" style="width: 200px; height: 200px;"></div>
+    <div id="joystick-zone"></div>
+
+    <div class="caixa-slider" style="border-color: #bc13fe;">
+        <label>ALTURA PINO: <b id="val-h">90</b>°</label>
+        <input type="range" min="0" max="180" value="90" oninput="ajustar('H', this.value, 'val-h')">
+    </div>
 </div>
 
 <script>
-    let port, writer;
+    let gattChar = null;
+    // O UUID que o HC-05 usa para se comunicar
+    const SERVICE_UUID = 0xFFE0; // Serviço comum para módulos seriais chineses
+    const CHAR_UUID = 0xFFE1;    // Característica de escrita
 
-    async function conectarSerial() {
+    async function conectarForçado() {
+        const statusTxt = document.getElementById('status');
         try {
-            // Isso abrirá uma lista. O HC-05 deve aparecer nela se estiver pareado!
-            port = await navigator.serial.requestPort();
-            await port.open({ baudRate: 9600 });
+            statusTxt.innerText = "Procurando sinal...";
             
-            writer = port.writable.getWriter();
+            // Mudança estratégica: Pedimos por todos, mas focamos nos serviços de dados
+            const device = await navigator.bluetooth.requestDevice({
+                acceptAllDevices: true,
+                optionalServices: [SERVICE_UUID, '00001101-0000-1000-8000-00805f9b34fb']
+            });
+
+            statusTxt.innerText = "Pareando rádio...";
+            const server = await device.gatt.connect();
+            
+            statusTxt.innerText = "Acessando comandos...";
+            // Tentamos o serviço primário FFE0 (comum no HC-05 moderno/BLE)
+            const service = await server.getPrimaryService(SERVICE_UUID);
+            gattChar = await service.getCharacteristic(CHAR_UUID);
+
             document.getElementById('btn-conectar').innerText = "CONECTADO! 🚀";
             document.getElementById('btn-conectar').style.background = "#2196f3";
+            statusTxt.innerText = "Pronto!";
         } catch (e) {
-            alert("Erro Serial: " + e.message + "\n\nDica: Pareie o HC-05 no sistema antes.");
+            console.error(e);
+            statusTxt.innerText = "Erro: " + e.message;
+            // Se o erro for de UUID não encontrado, tentaremos o Bluetooth clássico
+            alert("Se o HC-05 aparecer na lista, mas der erro de UUID, seu modelo de HC-05 não suporta Web Bluetooth nativo no Chromebook.");
         }
     }
 
-    async function enviar(c) {
-        document.getElementById('txt-comando').innerText = c;
-        if (writer) {
-            const data = new TextEncoder().encode(c + '\n');
-            await writer.write(data);
+    async function enviar(cmd) {
+        if (gattChar) {
+            try {
+                const encoder = new TextEncoder();
+                await gattChar.writeValue(encoder.encode(cmd + '\n'));
+                if(cmd.length === 1) document.getElementById('txt-comando').innerText = traduzir(cmd);
+            } catch (e) { console.log("Falha no sinal"); }
         }
     }
 
-    function ajustarV(v) { 
-        document.getElementById('val-v').innerText = v; 
-        enviar('V' + v); 
+    function ajustar(prefixo, valor, labelId) {
+        document.getElementById(labelId).innerText = valor;
+        enviar(prefixo + valor);
     }
 
-    const joy = nipplejs.create({ zone: document.getElementById('joystick'), mode: 'static', position: {left: '50%', top: '50%'}, color: 'white', size: 150 });
-    joy.on('dir:up', () => enviar('F'));
-    joy.on('dir:down', () => enviar('B'));
-    joy.on('dir:left', () => enviar('L'));
-    joy.on('dir:right', () => enviar('R'));
+    function traduzir(c) {
+        const t = {'F':'FRENTE', 'B':'RÉ', 'L':'ESQUERDA', 'R':'DIREITA', 'S':'PARADO'};
+        return t[c] || c;
+    }
+
+    // Joystick Setup
+    const joy = nipplejs.create({ zone: document.getElementById('joystick-zone'), mode: 'static', position: {left: '50%', top: '50%'}, color: 'white', size: 150 });
+    joy.on('dir:up', () => enviar('F')); joy.on('dir:down', () => enviar('B'));
+    joy.on('dir:left', () => enviar('L')); joy.on('dir:right', () => enviar('R'));
     joy.on('end', () => enviar('S'));
-
-    window.addEventListener('keydown', (e) => {
-        const k = { 'ArrowUp':'F', 'ArrowDown':'B', 'ArrowLeft':'L', 'ArrowRight':'R', ' ':'S' };
-        if(k[e.key]) enviar(k[e.key]);
-    });
-    window.addEventListener('keyup', () => enviar('S'));
 </script>
 </body>
 </html>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Super Robo Control!</title>
+    <title>Super Robo Control! 🚀</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/nipplejs/0.10.1/nipplejs.min.js"></script>
     <style>
         :root {
@@ -15,62 +15,47 @@
         }
 
         body { 
-            background: #000; color: white; font-family: 'Arial Rounded MT Bold', 'Helvetica', sans-serif;
+            background: #000; color: white; font-family: 'Arial Rounded MT Bold', sans-serif;
             margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden;
-            user-select: none;
         }
 
-        /* Topo Amigável */
         header { 
-            padding: 15px; display: flex; justify-content: space-around; align-items: center; 
+            padding: 10px; display: flex; justify-content: space-around; align-items: center; 
             background: #1a1a1a; border-bottom: 4px solid #333;
         }
 
         #btn-conectar { 
-            background: var(--cor-frente); border: none; padding: 12px 25px; border-radius: 50px;
-            font-size: 1.2rem; font-weight: bold; cursor: pointer; box-shadow: 0 4px #00a85a;
+            background: var(--cor-frente); border: none; padding: 10px 20px; border-radius: 50px;
+            font-size: 1rem; font-weight: bold; cursor: pointer; box-shadow: 0 4px #00a85a;
         }
-        #btn-conectar:active { transform: translateY(4px); box-shadow: none; }
 
-        /* Visor de Comandos */
         #painel-comando {
-            background: #222; margin: 15px; padding: 10px; border-radius: 20px;
-            border: 4px solid #444; text-align: center; flex-shrink: 0;
+            background: #222; margin: 10px; padding: 10px; border-radius: 20px;
+            border: 4px solid #444; text-align: center;
         }
-        #txt-comando { font-size: 3.5rem; margin: 0; text-shadow: 0 0 20px var(--cor-frente); }
-        #txt-status { color: #888; text-transform: uppercase; letter-spacing: 2px; font-size: 1rem; }
+        #txt-comando { font-size: 3rem; margin: 0; color: var(--cor-parar); transition: 0.2s; }
 
-        /* Sliders Coloridos */
-        .area-ajustes { padding: 0 20px; display: flex; flex-direction: column; gap: 15px; }
-        .caixa-ajuste { background: #1a1a1a; padding: 10px; border-radius: 15px; border: 2px solid #333; }
-        .caixa-ajuste label { display: block; margin-bottom: 5px; font-size: 0.9rem; }
-        input[type=range] { width: 100%; height: 15px; border-radius: 10px; cursor: pointer; }
+        .caixa-ajuste { background: #1a1a1a; padding: 8px; margin: 5px 15px; border-radius: 12px; border: 2px solid #333; }
+        input[type=range] { width: 100%; height: 15px; cursor: pointer; }
 
-        /* Controles Principais */
-        .container-controles { 
-            flex-grow: 1; display: flex; justify-content: center; align-items: center; 
-            position: relative; margin: 20px 0;
-        }
+        .container-controles { flex-grow: 1; display: flex; justify-content: center; align-items: center; }
 
-        /* Botões Estilo Gamepad */
-        .grid-botoes { display: grid; grid-template-columns: repeat(3, 90px); gap: 15px; }
+        .grid-botoes { display: grid; grid-template-columns: repeat(3, 85px); gap: 10px; }
         .btn-game { 
-            width: 90px; height: 90px; border-radius: 20px; border: none; 
-            font-size: 2.5rem; color: white; cursor: pointer; background: #333;
-            box-shadow: 0 6px #1a1a1a; transition: 0.1s;
+            width: 85px; height: 85px; border-radius: 18px; border: none; 
+            font-size: 2rem; color: white; cursor: pointer; background: #333;
+            box-shadow: 0 5px #1a1a1a;
         }
-        .btn-game:active { transform: translateY(4px); box-shadow: 0 2px #1a1a1a; }
+        .btn-game:active { transform: translateY(3px); box-shadow: 0 2px #1a1a1a; }
         
-        .btn-f { background: var(--cor-frente); box-shadow: 0 6px #00a85a; }
-        .btn-b { background: var(--cor-tras); box-shadow: 0 6px #bfae00; color: #000; }
-        .btn-l, .btn-r { background: var(--cor-lados); box-shadow: 0 6px #0099b3; }
-        .btn-s { background: var(--cor-parar); box-shadow: 0 6px #b32222; }
+        .btn-f { background: var(--cor-frente); }
+        .btn-b { background: var(--cor-tras); color: #000; }
+        .btn-l, .btn-r { background: var(--cor-lados); }
+        .btn-s { background: var(--cor-parar); }
 
-        /* Alternador de Modo */
-        .modo-switch { background: #333; border-radius: 30px; padding: 5px; display: flex; gap: 5px; }
-        .btn-modo { background: none; border: none; color: white; padding: 8px 15px; border-radius: 25px; cursor: pointer; }
+        .modo-switch { background: #333; border-radius: 30px; padding: 5px; display: flex; }
+        .btn-modo { background: none; border: none; color: white; padding: 5px 12px; border-radius: 20px; cursor: pointer; }
         .modo-ativo { background: var(--cor-lados); font-weight: bold; }
-
         .escondido { display: none !important; }
     </style>
 </head>
@@ -79,30 +64,27 @@
 <header>
     <button id="btn-conectar" onclick="conectarBT()">LIGAR ROBÔ 🤖</button>
     <div class="modo-switch">
-        <button id="m-pad" class="btn-modo modo-ativo" onclick="mudarModo('pad')">JOYSTICK</button>
+        <button id="m-pad" class="btn-modo modo-ativo" onclick="mudarModo('pad')">PAD</button>
         <button id="m-btn" class="btn-modo" onclick="mudarModo('btn')">BOTÕES</button>
     </div>
 </header>
 
 <div id="painel-comando">
-    <p id="txt-status">Aguardando...</p>
     <h1 id="txt-comando">PARADO</h1>
+    <p id="txt-status" style="margin:0; font-size:0.8rem; color:#888;">Bluetooth Desconectado</p>
 </div>
 
-<div class="area-ajustes">
-    <div class="caixa-ajuste" style="border-color: var(--cor-lados);">
-        <label>VELOCIDADE DO MOTOR: <b id="val-v">150</b></label>
-        <input type="range" min="0" max="255" value="150" oninput="ajustarV(this.value)">
-    </div>
-    <div class="caixa-ajuste" style="border-color: var(--cor-pino);">
-        <label>ALTURA DO PINO: <b id="val-h">90</b>°</label>
-        <input type="range" min="0" max="180" value="90" oninput="ajustarH(this.value)">
-    </div>
+<div class="caixa-ajuste" style="border-color: var(--cor-lados);">
+    <label style="font-size:0.8rem;">VELOCIDADE: <b id="val-v">150</b></label>
+    <input type="range" min="0" max="255" value="150" oninput="ajustarV(this.value)">
+</div>
+<div class="caixa-ajuste" style="border-color: var(--cor-pino);">
+    <label style="font-size:0.8rem;">ALTURA PINO: <b id="val-h">90</b>°</label>
+    <input type="range" min="0" max="180" value="90" oninput="ajustarH(this.value)">
 </div>
 
 <div class="container-controles">
-    <div id="area-joystick" style="width: 200px; height: 200px;"></div>
-
+    <div id="area-joystick" style="width: 180px; height: 180px;"></div>
     <div id="area-botoes" class="grid-botoes escondido">
         <div></div> <button class="btn-game btn-f" onmousedown="enviar('F')" onmouseup="enviar('S')" ontouchstart="enviar('F')" ontouchend="enviar('S')">▲</button> <div></div>
         <button class="btn-game btn-l" onmousedown="enviar('L')" onmouseup="enviar('S')" ontouchstart="enviar('L')" ontouchend="enviar('S')">◀</button>
@@ -114,36 +96,63 @@
 
 <script>
     let device, char;
-    const UUID = '00001101-0000-1000-8000-00805f9b34fb';
+    // UUID Serial Padrão para HC-05 (Bluetooth Classic SPP)
+    const SERIAL_UUID = '00001101-0000-1000-8000-00805f9b34fb';
 
     const infos = {
         'F': { t: 'FRENTE', c: 'var(--cor-frente)' },
-        'B': { t: 'PARA TRÁS', c: 'var(--cor-tras)' },
+        'B': { t: 'RÉ', c: 'var(--cor-tras)' },
         'L': { t: 'ESQUERDA', c: 'var(--cor-lados)' },
         'R': { t: 'DIREITA', c: 'var(--cor-lados)' },
         'S': { t: 'PARADO', c: 'var(--cor-parar)' }
     };
 
     async function conectarBT() {
+        const btn = document.getElementById('btn-conectar');
+        const status = document.getElementById('txt-status');
         try {
-            device = await navigator.bluetooth.requestDevice({ filters: [{ namePrefix: 'HC' }], optionalServices: [UUID] });
+            status.innerText = "Buscando Robô...";
+            // Filtro focado no Serviço Serial
+            device = await navigator.bluetooth.requestDevice({
+                filters: [{ services: [SERIAL_UUID] }],
+                optionalServices: [SERIAL_UUID]
+            });
+
+            status.innerText = "Conectando...";
             const server = await device.gatt.connect();
-            const service = await server.getPrimaryService(UUID);
-            char = await service.getCharacteristic(UUID);
-            document.getElementById('btn-conectar').innerText = "CONECTADO! 🚀";
-            document.getElementById('txt-status').innerText = "Robô pronto para a missão!";
-        } catch (e) { alert("Ops! O Bluetooth não ligou."); }
+            const service = await server.getPrimaryService(SERIAL_UUID);
+            char = await service.getCharacteristic(SERIAL_UUID);
+            
+            btn.innerText = "CONECTADO! 🚀";
+            btn.style.background = "#2196f3";
+            status.innerText = "Robô pronto!";
+
+            device.addEventListener('gattserverdisconnected', () => {
+                btn.innerText = "LIGAR ROBÔ 🤖";
+                btn.style.background = "var(--cor-frente)";
+                status.innerText = "Conexão perdida!";
+                char = null;
+            });
+        } catch (e) {
+            console.error(e);
+            status.innerText = "Erro ao conectar.";
+            alert("Certifique-se de que o HC-05 NÃO está pareado nas configurações do Chromebook antes de clicar aqui.");
+        }
     }
 
     async function enviar(c) {
         if(infos[c]) {
-            document.getElementById('txt-comando').innerText = infos[c].t;
-            document.getElementById('txt-comando').style.color = infos[c].c;
-            document.getElementById('txt-comando').style.textShadow = `0 0 20px ${infos[c].c}`;
+            const display = document.getElementById('txt-comando');
+            display.innerText = infos[c].t;
+            display.style.color = infos[c].c;
+            display.style.textShadow = `0 0 20px ${infos[c].c}`;
         }
         if (char) {
-            const enc = new TextEncoder();
-            await char.writeValue(enc.encode(c + '\n'));
+            try {
+                const enc = new TextEncoder();
+                // Enviamos com \n para o Arduino saber onde o comando termina
+                await char.writeValue(enc.encode(c + '\n'));
+            } catch (e) { console.log("Erro de envio"); }
         }
     }
 
@@ -158,18 +167,16 @@
         enviar('S');
     }
 
-    // Inicializa Joystick
-    const joy = nipplejs.create({ zone: document.getElementById('area-joystick'), mode: 'static', position: {left: '50%', top: '50%'}, color: 'white', size: 150 });
+    const joy = nipplejs.create({ zone: document.getElementById('area-joystick'), mode: 'static', position: {left: '50%', top: '50%'}, color: 'white', size: 130 });
     joy.on('dir:up', () => enviar('F')); joy.on('dir:down', () => enviar('B'));
     joy.on('dir:left', () => enviar('L')); joy.on('dir:right', () => enviar('R'));
     joy.on('end', () => enviar('S'));
 
-    // Atalhos Teclado
     window.addEventListener('keydown', (e) => {
         const k = { 'ArrowUp':'F', 'ArrowDown':'B', 'ArrowLeft':'L', 'ArrowRight':'R', ' ':'S' };
         if(k[e.key]) enviar(k[e.key]);
     });
-    window.addEventListener('keyup', () => enviar('S'));
+    window.addEventListener('keyup', (e) => { if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)) enviar('S'); });
 </script>
 </body>
 </html>

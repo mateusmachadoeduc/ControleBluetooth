@@ -3,104 +3,298 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Super Robo Control! 🚀</title>
+    <title>RoboControl Ultimate 🎮</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/nipplejs/0.10.1/nipplejs.min.js"></script>
     <style>
-        :root { --frente: #00ff88; --tras: #ffea00; --lados: #00d9ff; --parar: #ff3131; }
-        body { background: #000; color: white; font-family: 'Arial Rounded MT Bold', sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-        header { padding: 15px; background: #1a1a1a; border-bottom: 4px solid #333; display: flex; justify-content: space-around; align-items: center; }
-        #btn-conectar { background: var(--frente); border: none; padding: 15px 30px; border-radius: 50px; font-weight: bold; cursor: pointer; font-size: 1.1rem; box-shadow: 0 4px #00a85a; }
-        #txt-comando { font-size: 3.5rem; margin: 15px 0; color: var(--parar); text-align: center; }
-        .controles { flex-grow: 1; display: flex; flex-direction: column; justify-content: space-around; align-items: center; }
-        .caixa-slider { background: #222; width: 85%; padding: 10px; border-radius: 15px; border: 2px solid #444; }
-        input[type=range] { width: 100%; height: 20px; accent-color: var(--lados); }
-        #joystick-zone { width: 200px; height: 200px; }
+        /* --- ESTILO GAMER INFANTIL --- */
+        :root {
+            --neon-green: #39ff14;
+            --neon-blue: #00ffff;
+            --neon-red: #ff073a;
+            --neon-yellow: #fefe33;
+            --neon-purple: #bc13fe;
+            --bg-color: #050505;
+            --panel-bg: #151515;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: white;
+            font-family: 'Verdana', sans-serif;
+            display: flex; flex-direction: column; align-items: center;
+            height: 100vh; margin: 0; overflow: hidden;
+            user-select: none; /* Impede seleção de texto */
+        }
+
+        /* TOPO: Botão de Conexão */
+        header {
+            width: 100%; padding: 15px; background: #111;
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 3px solid #333; box-shadow: 0 0 15px rgba(0,255,255,0.2);
+        }
+
+        #btn-connect {
+            background: var(--neon-green); color: black; border: none;
+            padding: 10px 25px; border-radius: 50px; font-weight: 900; font-size: 1rem;
+            box-shadow: 0 0 10px var(--neon-green); cursor: pointer; text-transform: uppercase;
+        }
+
+        .switch-mode {
+            background: #333; border-radius: 20px; padding: 4px; display: flex;
+        }
+        .mode-opt {
+            padding: 8px 15px; border-radius: 15px; border: none; background: none; color: #888; font-weight: bold; cursor: pointer;
+        }
+        .mode-opt.active { background: var(--neon-blue); color: black; }
+
+        /* PAINEL DE STATUS */
+        #dashboard {
+            margin: 10px; text-align: center;
+            text-shadow: 0 0 10px rgba(255,255,255,0.5);
+        }
+        #cmd-display {
+            font-size: 3rem; font-weight: 900; margin: 0;
+            color: var(--neon-red); transition: color 0.2s;
+        }
+        #status-msg { font-size: 0.8rem; color: #666; margin-top: 5px; }
+
+        /* ÁREA DE CONTROLES (Sliders + Botões Extras) */
+        .controls-middle {
+            width: 90%; max-width: 500px; display: flex; flex-direction: column; gap: 10px;
+            background: var(--panel-bg); padding: 10px; border-radius: 15px; border: 1px solid #333;
+        }
+
+        .special-btns { display: flex; justify-content: space-around; margin-bottom: 5px; }
+        .action-btn {
+            width: 60px; height: 60px; border-radius: 50%; border: 2px solid #555;
+            background: #222; color: white; font-size: 1.5rem; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .action-btn.active-n { border-color: var(--neon-yellow); color: var(--neon-yellow); box-shadow: 0 0 15px var(--neon-yellow); }
+        .action-btn.active-p { border-color: var(--neon-red); color: var(--neon-red); box-shadow: 0 0 15px var(--neon-red); }
+
+        .slider-row { display: flex; align-items: center; gap: 10px; font-size: 0.8rem; font-weight: bold; }
+        input[type=range] { flex-grow: 1; height: 10px; border-radius: 5px; accent-color: var(--neon-blue); cursor: pointer; }
+
+        /* ÁREA DE MOVIMENTO (Joystick/Botões) */
+        .movement-area {
+            flex-grow: 1; width: 100%; display: flex; justify-content: center; align-items: center; position: relative;
+        }
+        
+        /* Grid de Botões Grandes */
+        .dpad-grid {
+            display: grid; grid-template-columns: repeat(3, 90px); gap: 15px;
+        }
+        .dpad-btn {
+            width: 90px; height: 90px; border-radius: 20px; border: none;
+            font-size: 2.5rem; color: #000; font-weight: bold;
+            box-shadow: 0 5px 0 rgba(0,0,0,0.5); cursor: pointer;
+        }
+        .dpad-btn:active { transform: translateY(5px); box-shadow: none; }
+        
+        .b-up { background: var(--neon-green); grid-column: 2; }
+        .b-left { background: var(--neon-blue); grid-column: 1; }
+        .b-stop { background: var(--neon-red); color: white; grid-column: 2; }
+        .b-right { background: var(--neon-blue); grid-column: 3; }
+        .b-down { background: var(--neon-yellow); grid-column: 2; }
+
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
-<header>
-    <button id="btn-conectar" onclick="conectarForçado()">BUSCAR ROBÔ 🤖</button>
-    <p id="status" style="font-size: 0.7rem; color: #888;">Desconectado</p>
-</header>
+    <header>
+        <button id="btn-connect" onclick="connectToBot()">LIGAR ROBÔ ⚡</button>
+        <div class="switch-mode">
+            <button id="opt-pad" class="mode-opt active" onclick="setMode('pad')">PAD</button>
+            <button id="opt-btn" class="mode-opt" onclick="setMode('btn')">BOTÕES</button>
+        </div>
+    </header>
 
-<div class="controles">
-    <h1 id="txt-comando">PARADO</h1>
-
-    <div class="caixa-slider">
-        <label>VELOCIDADE: <b id="val-v">150</b></label>
-        <input type="range" min="0" max="255" value="150" oninput="ajustar('V', this.value, 'val-v')">
+    <div id="dashboard">
+        <div id="cmd-display">PARADO</div>
+        <div id="status-msg">Desconectado</div>
     </div>
 
-    <div id="joystick-zone"></div>
-
-    <div class="caixa-slider" style="border-color: #bc13fe;">
-        <label>ALTURA PINO: <b id="val-h">90</b>°</label>
-        <input type="range" min="0" max="180" value="90" oninput="ajustar('H', this.value, 'val-h')">
+    <div class="controls-middle">
+        <div class="special-btns">
+            <button id="btn-light" class="action-btn" onclick="toggleLight()">💡</button>
+            <button id="btn-horn" class="action-btn" onmousedown="horn(true)" onmouseup="horn(false)" ontouchstart="horn(true)" ontouchend="horn(false)">🔊</button>
+        </div>
+        
+        <div class="slider-row" style="color: var(--neon-blue)">
+            <span>VEL: <span id="v-val">150</span></span>
+            <input type="range" min="0" max="255" value="150" oninput="updateVal('V', this.value, 'v-val')">
+        </div>
+        <div class="slider-row" style="color: var(--neon-purple)">
+            <span>PINO: <span id="h-val">90</span>°</span>
+            <input type="range" min="0" max="180" value="90" oninput="updateVal('H', this.value, 'h-val')">
+        </div>
     </div>
-</div>
 
-<script>
-    let gattChar = null;
-    // O UUID que o HC-05 usa para se comunicar
-    const SERVICE_UUID = 0xFFE0; // Serviço comum para módulos seriais chineses
-    const CHAR_UUID = 0xFFE1;    // Característica de escrita
+    <div class="movement-area">
+        <div id="zone-joystick" style="width: 200px; height: 200px;"></div>
+        
+        <div id="zone-buttons" class="dpad-grid hidden">
+            <button class="dpad-btn b-up" onmousedown="send('F')" onmouseup="send('S')" ontouchstart="send('F')" ontouchend="send('S')">▲</button>
+            <button class="dpad-btn b-left" onmousedown="send('L')" onmouseup="send('S')" ontouchstart="send('L')" ontouchend="send('S')">◀</button>
+            <button class="dpad-btn b-stop" onclick="send('S')">■</button>
+            <button class="dpad-btn b-right" onmousedown="send('R')" onmouseup="send('S')" ontouchstart="send('R')" ontouchend="send('S')">▶</button>
+            <button class="dpad-btn b-down" onmousedown="send('B')" onmouseup="send('S')" ontouchstart="send('B')" ontouchend="send('S')">▼</button>
+        </div>
+    </div>
 
-    async function conectarForçado() {
-        const statusTxt = document.getElementById('status');
-        try {
-            statusTxt.innerText = "Procurando sinal...";
-            
-            // Mudança estratégica: Pedimos por todos, mas focamos nos serviços de dados
-            const device = await navigator.bluetooth.requestDevice({
-                acceptAllDevices: true,
-                optionalServices: [SERVICE_UUID, '00001101-0000-1000-8000-00805f9b34fb']
-            });
+    <script>
+        // --- CONFIGURAÇÃO BLUETOOTH CRÍTICA ---
+        let bluetoothDevice;
+        let bluetoothCharacteristic;
+        // UUID Padrão Serial (SPP) - O "Santo Graal" do HC-05
+        const SERIAL_UUID = '00001101-0000-1000-8000-00805f9b34fb';
 
-            statusTxt.innerText = "Pareando rádio...";
-            const server = await device.gatt.connect();
-            
-            statusTxt.innerText = "Acessando comandos...";
-            // Tentamos o serviço primário FFE0 (comum no HC-05 moderno/BLE)
-            const service = await server.getPrimaryService(SERVICE_UUID);
-            gattChar = await service.getCharacteristic(CHAR_UUID);
+        async function connectToBot() {
+            const btn = document.getElementById('btn-connect');
+            const msg = document.getElementById('status-msg');
 
-            document.getElementById('btn-conectar').innerText = "CONECTADO! 🚀";
-            document.getElementById('btn-conectar').style.background = "#2196f3";
-            statusTxt.innerText = "Pronto!";
-        } catch (e) {
-            console.error(e);
-            statusTxt.innerText = "Erro: " + e.message;
-            // Se o erro for de UUID não encontrado, tentaremos o Bluetooth clássico
-            alert("Se o HC-05 aparecer na lista, mas der erro de UUID, seu modelo de HC-05 não suporta Web Bluetooth nativo no Chromebook.");
-        }
-    }
-
-    async function enviar(cmd) {
-        if (gattChar) {
             try {
-                const encoder = new TextEncoder();
-                await gattChar.writeValue(encoder.encode(cmd + '\n'));
-                if(cmd.length === 1) document.getElementById('txt-comando').innerText = traduzir(cmd);
-            } catch (e) { console.log("Falha no sinal"); }
+                msg.innerText = "Procurando dispositivos...";
+                
+                // 1. SOLICITAÇÃO GENÉRICA (Pulo do Gato para ChromeOS)
+                // Não filtramos por nome para garantir que o HC-05 apareça na lista.
+                bluetoothDevice = await navigator.bluetooth.requestDevice({
+                    acceptAllDevices: true, 
+                    optionalServices: [SERIAL_UUID] // IMPORTANTE: Pedimos permissão para usar Serial
+                });
+
+                // Monitora se cair a conexão
+                bluetoothDevice.addEventListener('gattserverdisconnected', onDisconnected);
+
+                msg.innerText = "Conectando ao Bluetooth...";
+                const server = await bluetoothDevice.gatt.connect();
+
+                msg.innerText = "Buscando Serial...";
+                // 2. CONEXÃO ESPECÍFICA
+                // Aqui tentamos pegar o serviço serial padrão.
+                const service = await server.getPrimaryService(SERIAL_UUID);
+                bluetoothCharacteristic = await service.getCharacteristic(SERIAL_UUID);
+
+                // Sucesso!
+                btn.innerText = "CONECTADO! 🎮";
+                btn.style.background = "#00e676"; // Verde Neon
+                msg.innerText = "Pronto para jogar: " + bluetoothDevice.name;
+
+            } catch (error) {
+                console.error(error);
+                msg.innerText = "Erro: " + error.message;
+                
+                if (error.message.includes("No Services matching UUID")) {
+                    alert("ERRO DE SERVIÇO:\nO Chrome bloqueou o HC-05.\n\nSOLUÇÃO:\n1. Digite 'chrome://flags' na barra de endereço.\n2. Ative 'Web Bluetooth new permissions backend'.\n3. Reinicie o Chrome.");
+                } else {
+                    alert("Não conectou. Tente 'Esquecer' o dispositivo no menu Bluetooth do Chromebook e tente de novo.");
+                }
+            }
         }
-    }
 
-    function ajustar(prefixo, valor, labelId) {
-        document.getElementById(labelId).innerText = valor;
-        enviar(prefixo + valor);
-    }
+        function onDisconnected() {
+            document.getElementById('btn-connect').innerText = "LIGAR ROBÔ ⚡";
+            document.getElementById('btn-connect').style.background = "#39ff14";
+            document.getElementById('status-msg').innerText = "Conexão Perdida!";
+            bluetoothCharacteristic = null;
+        }
 
-    function traduzir(c) {
-        const t = {'F':'FRENTE', 'B':'RÉ', 'L':'ESQUERDA', 'R':'DIREITA', 'S':'PARADO'};
-        return t[c] || c;
-    }
+        // --- LÓGICA DE ENVIO ---
+        async function send(cmd) {
+            updateDisplay(cmd);
+            if (!bluetoothCharacteristic) return;
 
-    // Joystick Setup
-    const joy = nipplejs.create({ zone: document.getElementById('joystick-zone'), mode: 'static', position: {left: '50%', top: '50%'}, color: 'white', size: 150 });
-    joy.on('dir:up', () => enviar('F')); joy.on('dir:down', () => enviar('B'));
-    joy.on('dir:left', () => enviar('L')); joy.on('dir:right', () => enviar('R'));
-    joy.on('end', () => enviar('S'));
-</script>
+            try {
+                // Envia comando + quebra de linha (\n) para o Arduino saber que acabou
+                const encoder = new TextEncoder();
+                await bluetoothCharacteristic.writeValue(encoder.encode(cmd + '\n'));
+            } catch (e) {
+                console.log('Falha no envio: ' + e);
+            }
+        }
+
+        // --- INTERFACE ---
+        let lightState = false;
+
+        function updateVal(prefix, val, labelId) {
+            document.getElementById(labelId).innerText = val;
+            send(prefix + val); // Ex: V150 ou H90
+        }
+
+        function toggleLight() {
+            lightState = !lightState;
+            const btn = document.getElementById('btn-light');
+            if(lightState) {
+                btn.classList.add('active-n');
+                send('N'); // 'N' para ON
+            } else {
+                btn.classList.remove('active-n');
+                send('F_LED'); // Envia algo diferente de F (que é Frente). Usei 'F_LED' ou configure o arduino para 'f'
+                // Sugestão: Ajuste o Arduino para ligar com 'N' e desligar com 'n' minúsculo
+                send('n'); 
+            }
+        }
+
+        function horn(active) {
+            const btn = document.getElementById('btn-horn');
+            if(active) {
+                btn.classList.add('active-p');
+                send('P');
+            } else {
+                btn.classList.remove('active-p');
+                send('p');
+            }
+        }
+
+        function updateDisplay(cmd) {
+            const disp = document.getElementById('cmd-display');
+            const map = {'F':'FRENTE','B':'RÉ','L':'ESQUERDA','R':'DIREITA','S':'PARADO'};
+            
+            if(map[cmd]) {
+                disp.innerText = map[cmd];
+                // Cores dinâmicas
+                if(cmd === 'S') disp.style.color = "var(--neon-red)";
+                else if(cmd === 'B') disp.style.color = "var(--neon-yellow)";
+                else disp.style.color = "var(--neon-green)";
+            }
+        }
+
+        function setMode(mode) {
+            document.getElementById('opt-pad').className = mode === 'pad' ? 'mode-opt active' : 'mode-opt';
+            document.getElementById('opt-btn').className = mode === 'btn' ? 'mode-opt active' : 'mode-opt';
+            
+            if(mode === 'pad') {
+                document.getElementById('zone-joystick').classList.remove('hidden');
+                document.getElementById('zone-buttons').classList.add('hidden');
+            } else {
+                document.getElementById('zone-joystick').classList.add('hidden');
+                document.getElementById('zone-buttons').classList.remove('hidden');
+            }
+        }
+
+        // --- JOYSTICK & TECLADO ---
+        const joy = nipplejs.create({
+            zone: document.getElementById('zone-joystick'),
+            mode: 'static', position: {left: '50%', top: '50%'},
+            color: 'cyan', size: 150
+        });
+
+        joy.on('dir:up', () => send('F'));
+        joy.on('dir:down', () => send('B'));
+        joy.on('dir:left', () => send('L'));
+        joy.on('dir:right', () => send('R'));
+        joy.on('end', () => send('S'));
+
+        window.addEventListener('keydown', (e) => {
+            const k = {'ArrowUp':'F', 'ArrowDown':'B', 'ArrowLeft':'L', 'ArrowRight':'R', ' ':'S'};
+            if(k[e.key]) send(k[e.key]);
+        });
+        window.addEventListener('keyup', (e) => {
+            if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)) send('S');
+        });
+
+    </script>
 </body>
 </html>
